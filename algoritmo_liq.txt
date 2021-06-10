@@ -1,8 +1,4 @@
-
-
-
-
-Public Sub of202_lopez(LineaId As Integer, Capital As Currency, plazo As Integer, difDias1eraCuota)
+Public Sub of202_nanni(LineaId As Integer, Capital As Currency, plazo As Integer, difDias1eraCuota)
 
 On Error GoTo ErrFrances
 
@@ -32,7 +28,7 @@ If Not RstLinea.EOF Then
     
        'Calculo Ajuste 1º cuota
        If difDias1eraCuota > 0 Then
-             AjustePrimerCuota = ((Vartasa / 360) * difDias1eraCuota * CapitalSolicitado) / 100
+             AjustePrimerCuota = ((Vartasa / 360) * (difDias1eraCuota-1) * CapitalSolicitado) / 100
        End If
 
         VarSeguro = RstLinea!LineaSeguroVida
@@ -88,7 +84,7 @@ If Not RstLinea.EOF Then
             Tempo!Interes = Interes
             Tempo!IvaInteres = Interes * RstLinea!LineaIVASobreInt / 100
             Tempo!SdoCap = SaldoCapital
-            Tempo!SeguroVida = VarSeguroVida
+            Tempo!SeguroVida = 0
             Tempo!FondoGarantia = VarFondoGtia
             Tempo!Gastos = (Capital + Interes) * (RstLinea!LineaGastosAdmin / 100)
             Tempo!IVAGastos = Tempo!Gastos * IVAGeneral / 100
@@ -112,7 +108,7 @@ If Not RstLinea.EOF Then
                                                             Capital, 0, RstLinea!destinolineaid, RstLinea!LineaFondoReserva, RstLinea!LineaEdadFondoGtia)
 
        
-'      Borro las retenciones del crédito
+      'Borro las retenciones del crédito
        Dim RstRetenciones As Recordset
        Dim Retenciones As Currency
        Retenciones = 0
@@ -160,15 +156,15 @@ If Not RstLinea.EOF Then
        
  
    '  Ajuste 1º cuota
-'       If difDias1eraCuota > 0 Then
-'             RstRetenciones.AddNew
-'             RstRetenciones!ConceptoCuotaID = 9 '2 'Ajuste 1º cuota
-'             RstRetenciones!TempoImporte = AjustePrimerCuota
-'             RstRetenciones!CodigoConcepto = 1
-'             RstRetenciones!Dias = Trim(difDias1eraCuota) + " días"
-'             RstRetenciones!SucursalID = Forms!Menu.SucursalID
-'             RstRetenciones!CreditoID = 0
-'             RstRetenciones!PcIP = Forms!Menu.IPPc
+       If difDias1eraCuota > 0 Then
+             RstRetenciones.AddNew
+             RstRetenciones!ConceptoCuotaId = 9 '2 'Ajuste 1º cuota
+             RstRetenciones!TempoImporte = AjustePrimerCuota
+             RstRetenciones!CodigoConcepto = 1
+             RstRetenciones!Dias = Trim(difDias1eraCuota) + " días"
+             RstRetenciones!SucursalID = Forms!Menu.SucursalID
+             RstRetenciones!CreditoID = 0
+             RstRetenciones!PcIP = Forms!Menu.IPPc
              
 '             '****** Cargo ajuste 1era cuota al cuadro *****
 '
@@ -199,44 +195,42 @@ If Not RstLinea.EOF Then
              
              
              '***********************************************
-'             Retenciones = Retenciones + RstRetenciones!TempoImporte
-'             RstRetenciones.Update
-'       End If
+             Retenciones = Retenciones + RstRetenciones!TempoImporte
+             RstRetenciones.Update
+       End If
        
         '  IVA Ajuste 1º cuota
-''      If difDias1eraCuota > 0 Then
-'             RstRetenciones.AddNew
-'             RstRetenciones!ConceptoCuotaID = 36 ' IVA Ajuste 1º cuota
-'             RstRetenciones!TempoImporte = AjustePrimerCuota * (RstLinea!LineaIVAAjuste / 100)
-'             RstRetenciones!CodigoConcepto = 1
-'             RstRetenciones!Dias = Trim(difDias1eraCuota) + " días"
-'             RstRetenciones!SucursalID = Forms!Menu.SucursalID
-'             RstRetenciones!CreditoID = 0
-'             RstRetenciones!PcIP = Forms!Menu.IPPc
-'             Retenciones = Retenciones + RstRetenciones!TempoImporte
-'             RstRetenciones.Update
-'       End If
+       If difDias1eraCuota > 0 Then
+             RstRetenciones.AddNew
+             RstRetenciones!ConceptoCuotaId = 36 ' IVA Ajuste 1º cuota
+             RstRetenciones!TempoImporte = AjustePrimerCuota * (RstLinea!LineaIVAAjuste / 100)
+             RstRetenciones!CodigoConcepto = 1
+             RstRetenciones!Dias = Trim(difDias1eraCuota) + " días"
+             RstRetenciones!SucursalID = Forms!Menu.SucursalID
+             RstRetenciones!CreditoID = 0
+             RstRetenciones!PcIP = Forms!Menu.IPPc
+             Retenciones = Retenciones + RstRetenciones!TempoImporte
+             RstRetenciones.Update
+       End If
        
-     ' Cargo sellado
-       If RstLinea!LineaFondocredito > 0 Then
+     ' Fondo Seguro
+      If RstLinea!LineaFondocredito > 0 Then
           RstRetenciones.AddNew
-          RstRetenciones!ConceptoCuotaId = 47 ' Gastos Originacion
-          RstRetenciones!TempoImporte = (DSum("[Capital]", "TempoLiquidacion") + DSum("[Interes]", "TempoLiquidacion")) * (RstLinea!LineaSellado / 100)
-          'RstRetenciones!TempoImporte = Redondeo2(CapitalPrestado * 0.01)
+          RstRetenciones!ConceptoCuotaId = 47 ' FONDO SEGURO
+          RstRetenciones!TempoImporte = (DSum("[Capital]", "TempoLiquidacion") + DSum("[Interes]", "TempoLiquidacion")) * (RstLinea!LineaSeguroVida / 100)
           RstRetenciones!CodigoConcepto = 1
           Retenciones = Retenciones + RstRetenciones!TempoImporte
           RstRetenciones!SucursalID = Forms!Menu.SucursalID
           RstRetenciones!CreditoID = 0
           RstRetenciones!PcIP = Forms!Menu.IPPc
           RstRetenciones.Update
-       End If
+      End If
        
-       ' Fondo Seguro
+       ' Cargo sellado
        If RstLinea!LineaSellado > 0 Then
           RstRetenciones.AddNew
-          RstRetenciones!ConceptoCuotaId = 24
+          RstRetenciones!ConceptoCuotaId = 24 ' Sellado
           RstRetenciones!TempoImporte = (DSum("[Capital]", "TempoLiquidacion") + DSum("[Interes]", "TempoLiquidacion")) * (RstLinea!LineaSellado / 100)
-0         'RstRetenciones!TempoImporte = Redondeo2(CapitalPrestado * 0.01)
           RstRetenciones!CodigoConcepto = 1
           Retenciones = Retenciones + RstRetenciones!TempoImporte
           RstRetenciones!SucursalID = Forms!Menu.SucursalID
@@ -365,8 +359,3 @@ ErrFrances:
 
 
 End Sub
-
-
-tablas:
-rango plazos
-LineasCreditos
