@@ -892,7 +892,7 @@ ParaAltaCred2 = Trim(IIf(IsNull(Me.GaranteID), "0", Me.GaranteID)) & ", " & _
         Exit Sub
 ErrGuardarCred:
         MsgBox "Ocurrió un error, no se grabó el crédito.", vbCritical, "Atención!!!"
-        MsgBox Err.description
+        MsgBox Err.description & " Err.Number:" &  Err.Number &
         'Rollback
         
 End Sub
